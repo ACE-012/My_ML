@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from Visualizer import visualize_tree
+from ExtraFunctions.GraphvizExtra import visualize_tree
 data=pd.read_csv('./diabetes.csv')
 input_cols = ["Pregnancies","Glucose","BloodPressure","SkinThickness","Insulin","BMI","DiabetesPedigreeFunction","Age"]
 output_cols = ["Outcome"]
