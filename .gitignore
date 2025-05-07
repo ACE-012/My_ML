@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+#myfiles
+decision_tree
+decision_tree.png
