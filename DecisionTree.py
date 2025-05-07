@@ -35,6 +35,8 @@ class DecisionTree():
         max_indx=0
         max_leaf={"Left":-1,"Right":-1}
         for i in range(X.shape[1]):
+            if X.size==0:
+                return -2
             IfGain,val,_,leaf=self.__calculate_IfGain(X,Y,i)
             if max_IfGain<IfGain:
                 max_IfGain=IfGain
@@ -45,11 +47,14 @@ class DecisionTree():
             X_indx=X[:,max_indx]
         except IndexError:
             return self.out_labels[1] if (Y==1).sum()>(Y==0).sum() else self.out_labels[0]
-        sub_tree= {"Label":labels[max_indx],"val":max_val,"gini":max_IfGain,
-                   "Left":self.out_labels[max_leaf["Left"]] if max_leaf["Left"]!=-1 else self.__create__gini_tree(X[X[:,max_indx]<max_val],Y[X_indx<max_val],max_indx,list(labels)),
-                   "Right":self.out_labels[max_leaf["Right"]] if max_leaf["Right"]!=-1 else self.__create__gini_tree(X[X[:,max_indx]>=max_val],Y[X_indx>=max_val],max_indx,list(labels))}
+        sub_tree= {"Label":labels[max_indx],"val":max_val,"IfGain":max_IfGain,
+                   "Left":self.out_labels[max_leaf["Left"]] if max_leaf["Left"]!=-1 else self.__create__IfGain_tree(X[X[:,max_indx]<max_val],Y[X_indx<max_val],max_indx,list(labels)),
+                   "Right":self.out_labels[max_leaf["Right"]] if max_leaf["Right"]!=-1 else self.__create__IfGain_tree(X[X[:,max_indx]>=max_val],Y[X_indx>=max_val],max_indx,list(labels))}
         if type(sub_tree["Left"])==str and type(sub_tree["Right"])==str and sub_tree["Left"]==sub_tree["Right"]:
             return sub_tree["Left"]
+        #if sub_tree["Left"]==-2 or sub_tree["Right"]==-2:
+        #    return self.out_labels[1 if (Y==0).sum()<(Y==1).sum() else 0]
+            
         return sub_tree
 
     def __calculate_IfGain(self,X:np.ndarray,Y:np.ndarray,col_id):
@@ -77,6 +82,11 @@ class DecisionTree():
                 if max_IfGain<IfGain:
                     max_IfGain=IfGain
                     max_indx=each
+                    if Left_ent==1 or (Left==1).sum()<self.min_thres or (Left==0).sum()<self.min_thres:
+                        #print(Left_Y,Left_N)
+                        pure_leaf["Left"]=1 if (Left==1).sum()>(Left==0).sum() else 0
+                    if Right_ent==1 or (Right==1).sum()<self.min_thres or (Right==0).sum()<self.min_thres:
+                        pure_leaf["Right"]=1 if (Right==1).sum()>(Right==0).sum() else 0
         else:
             _type="bool"
         return max_IfGain,max_indx,_type,pure_leaf
@@ -182,7 +192,9 @@ class DecisionTree():
             return self.__predict_helper(tree["Left"],X)
         return self.__predict_helper(tree["Right"],X)
     def visualize(self):
-        visualize_tree(self.__tree)
+        attributes=['Label','val',self.algo]
+        print(self.__tree)
+        visualize_tree(self.__tree,attributes=attributes)
 
 
 clf=DecisionTree(input_cols,["No","Yes"],min_thres=2,algo="IfGain")
