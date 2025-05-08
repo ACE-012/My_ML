@@ -25,7 +25,7 @@ class DecisionTree():
     def train(self,X:np.ndarray,Y:np.ndarray):
         self.__tree=self.__create__gini_tree(X,Y,labels=self.class_names) if self.algo=="gini" else self.__create__IfGain_tree(X,Y,labels=self.class_names)
 
-    def __create__IfGain_tree(self,X:np.ndarray,Y:np.ndarray,prev=-1,labels=[]):
+    def __create__IfGain_tree(self,X:np.ndarray,Y:np.ndarray,prev=-1,labels=[])->dict|str:
         if prev!=-1:
             X=np.delete(X,prev,1)
             #print(labels,prev)
@@ -36,7 +36,7 @@ class DecisionTree():
         max_leaf={"Left":-1,"Right":-1}
         for i in range(X.shape[1]):
             if X.size==0:
-                return -2
+                return "unk"
             IfGain,val,_,leaf=self.__calculate_IfGain(X,Y,i)
             if max_IfGain<IfGain:
                 max_IfGain=IfGain
@@ -52,8 +52,8 @@ class DecisionTree():
                    "Right":self.out_labels[max_leaf["Right"]] if max_leaf["Right"]!=-1 else self.__create__IfGain_tree(X[X[:,max_indx]>=max_val],Y[X_indx>=max_val],max_indx,list(labels))}
         if type(sub_tree["Left"])==str and type(sub_tree["Right"])==str and sub_tree["Left"]==sub_tree["Right"]:
             return sub_tree["Left"]
-        #if sub_tree["Left"]==-2 or sub_tree["Right"]==-2:
-        #    return self.out_labels[1 if (Y==0).sum()<(Y==1).sum() else 0]
+        if sub_tree["Left"]=="unk" or sub_tree["Right"]=="unk":
+            return self.out_labels[1 if (Y==0).sum()<(Y==1).sum() else 0]
             
         return sub_tree
 
@@ -98,7 +98,7 @@ class DecisionTree():
         return -np.sum([p * np.log2(p) for p in probabilities if p > 0])
 
 
-    def __create__gini_tree(self,X:np.ndarray,Y:np.ndarray,prev=-1,labels=[]):
+    def __create__gini_tree(self,X:np.ndarray,Y:np.ndarray,prev=-1,labels=[])->dict|str:
         if prev!=-1:
             X=np.delete(X,prev,1)
             #print(labels,prev)
@@ -110,6 +110,8 @@ class DecisionTree():
         #print(X.shape)
         #print(X,Y)
         for i in range(X.shape[1]):
+            if X.size==0:
+                return "unk"
             gini,val,_,leaf=self.__calculate_gini(X,Y,i)
             if min_gini>gini:
                 min_gini=gini
@@ -128,6 +130,9 @@ class DecisionTree():
                    "Right":self.out_labels[min_leaf["Right"]] if min_leaf["Right"]!=-1 else self.__create__gini_tree(X[X[:,min_indx]>=min_val],Y[X_indx>=min_val],min_indx,list(labels))}
         if type(sub_tree["Left"])==str and type(sub_tree["Right"])==str and sub_tree["Left"]==sub_tree["Right"]:
             return sub_tree["Left"]
+        if sub_tree["Left"]=="unk" or sub_tree["Right"]=="unk":
+            return self.out_labels[1 if (Y==0).sum()<(Y==1).sum() else 0]
+
         return sub_tree
 
 
@@ -193,13 +198,12 @@ class DecisionTree():
         return self.__predict_helper(tree["Right"],X)
     def visualize(self):
         attributes=['Label','val',self.algo]
-        print(self.__tree)
         visualize_tree(self.__tree,attributes=attributes)
 
 
-clf=DecisionTree(input_cols,["No","Yes"],min_thres=2,algo="IfGain")
+clf=DecisionTree(input_cols,["No","Yes"],min_thres=0,algo="IfGain")
 clf.train(X_train,Y_train)
 Y_pred=clf.predict(X_test)
 clf.visualize()
-print(((Y_pred==Y_test).sum()/Y_test.shape[0])*100)
+print(((Y_pred==Y_test).sum()/Y_pred.shape[0])*100)
 
